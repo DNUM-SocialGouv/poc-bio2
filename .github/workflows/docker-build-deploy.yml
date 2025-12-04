@@ -1,0 +1,110 @@
+name: Build push Docker image and deployment home in development environnement
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  GITOPS_REPO: fabrique-atlas/org-sdpsn-ws-bio2poc
+  
+jobs:
+  docker-build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha
+            
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }} 
+
+      # - name: Save image tag and environment in an env var
+      #   run: |
+      #     SHORT_SHA="${GITHUB_SHA::7}"
+      #     echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+
+      #     IMAGE_TAG_UPPER="$REGISTRY/$IMAGE_NAME:sha-$SHORT_SHA"
+      #     echo "IMAGE_TAG_UPPER=$IMAGE_TAG_UPPER" >> $GITHUB_ENV
+
+      #     IMAGE_TAG=$(echo "$IMAGE_TAG_UPPER" | tr 'A-Z' 'a-z')
+      #     echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      #     if [ "${GITHUB_REF_NAME}" = "develop" ]; then
+      #       echo "ENVIRONNEMENT=developpement" >> $GITHUB_ENV
+      #     else
+      #       echo "ENVIRONNEMENT=test" >> $GITHUB_ENV
+      #     fi
+
+      # - name: Install dependencies
+      #   run: |
+      #     cd deploy
+      #     npm ci
+      
+      # - name: Format and lint main.ts
+      #   run: |
+      #     cd deploy
+      #     npm run lint
+
+      # - name: Render manifests
+      #   run: |
+      #     cd deploy
+      #     npm run build
+
+      # - name: Checkout GitOps repository
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: ${{ env.GITOPS_REPO }}
+      #     path: gitops-repo
+      #     ssh-key: ${{ secrets.GITOPS_REPO_KEY }}
+
+      # - name: Manifests deployment to GitOps repository
+      #   run: |
+      #     if [ "${GITHUB_REF_NAME}" = "develop" ]; then
+      #       rm -rf gitops-repo/deployment-targets/developpement/home/*
+      #       cp -r deploy/dist/developpement/* gitops-repo/deployment-targets/developpement/home/
+      #     else
+      #       rm -rf gitops-repo/deployment-targets/test/home/*
+      #       cp -r deploy/dist/test/* gitops-repo/deployment-targets/test/home/
+      #     fi
+
+      #     # mail standard bot github Actions
+      #     git config --global user.name "github-actions[bot]"
+      #     git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      #     cd gitops-repo
+      #     git add .
+      #     if [ "${GITHUB_REF_NAME}" = "develop" ]; then
+      #       git commit -m 'Déploiement manifestes home environnement "developpement"'
+      #     else
+      #       git commit -m 'Déploiement manifestes home environnement "test"'
+      #     fi
+      #     git push
