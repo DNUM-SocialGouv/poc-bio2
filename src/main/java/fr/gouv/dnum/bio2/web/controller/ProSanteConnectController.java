@@ -61,7 +61,7 @@ public class ProSanteConnectController {
     private final RestTemplate restTemplate = new RestTemplate(); // Instance réutilisable
 
     private String getServerBaseLink(HttpServletRequest request) {
-        if (request.getServerPort()!=80) {
+        if (request.getServerPort()!=80 && request.getServerPort()!=443) {
             return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
         } else {
             return request.getScheme() + "://" + request.getServerName();
