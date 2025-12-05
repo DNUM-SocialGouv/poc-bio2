@@ -60,6 +60,14 @@ public class ProSanteConnectController {
     private final SecureRandom secureRandom = new SecureRandom();
     private final RestTemplate restTemplate = new RestTemplate(); // Instance réutilisable
 
+    private String getServerBaseLink(HttpServletRequest request) {
+        if (request.getServerPort()!=80) {
+            return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        } else {
+            return request.getScheme() + "://" + request.getServerName();
+        }
+    }
+
     /**
      * Génère l'URL d'authentification et initialise la session
      */
@@ -74,7 +82,7 @@ public class ProSanteConnectController {
         return UriComponentsBuilder.fromHttpUrl(ProSanteConnectConstants.ProSanteConnect.AUTH_ENDPOINT)
                 .queryParam("response_type", "code")
                 .queryParam("client_id", secureProSanteConnectConstants.getClientId())
-                .queryParam("redirect_uri", ProSanteConnectConstants.MyApplication.REDIRECT_URI)
+                .queryParam("redirect_uri", getServerBaseLink(request)+ProSanteConnectConstants.MyApplication.REDIRECT_URI)
                 .queryParam("scope", "openid scope_all")
                 .queryParam("acr_values", "eidas1")
                 .queryParam("nonce", String.valueOf(nonce))
@@ -129,7 +137,7 @@ public class ProSanteConnectController {
 
         try {
             // 1. Echange du code contre les tokens
-            BodyResponse tokens = exchangeCodeForToken(code);
+            BodyResponse tokens = exchangeCodeForToken(request, code);
             log.info("Tokens récupérés. AccessToken length: {}", tokens.getAccessToken().length());
 
             // 2. Validation du ID Token (JWT)
@@ -164,13 +172,13 @@ public class ProSanteConnectController {
         }
     }
 
-    private BodyResponse exchangeCodeForToken(String code) throws IOException {
+    private BodyResponse exchangeCodeForToken(HttpServletRequest request, String code) throws IOException {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("code", code);
         form.add("grant_type", "authorization_code");
         form.add("client_id", secureProSanteConnectConstants.getClientId());
         form.add("client_secret", secureProSanteConnectConstants.getClientSecret());
-        form.add("redirect_uri", ProSanteConnectConstants.MyApplication.REDIRECT_URI);
+        form.add("redirect_uri", getServerBaseLink(request)+ProSanteConnectConstants.MyApplication.REDIRECT_URI);
         form.add("scope", "openid scope_all");
 
         HttpHeaders headers = new HttpHeaders();
@@ -311,7 +319,7 @@ public class ProSanteConnectController {
 
             UriComponentsBuilder b = UriComponentsBuilder
                     .fromHttpUrl(ProSanteConnectConstants.ProSanteConnect.DISCONNECT_ENDPOINT)
-                    .queryParam("post_logout_redirect_uri", ProSanteConnectConstants.MyApplication.POST_INTERNAL_LOGOUT_REDIRECT_URI);
+                    .queryParam("post_logout_redirect_uri", getServerBaseLink(request)+ProSanteConnectConstants.MyApplication.POST_INTERNAL_LOGOUT_REDIRECT_URI);
 
             if (idToken != null) {
                 b.queryParam("id_token_hint", idToken);
@@ -324,7 +332,7 @@ public class ProSanteConnectController {
         } else {
             log.info("No session found for disconnection");
             // Redirection par défaut en cas d'absence de session
-            response.sendRedirect(ProSanteConnectConstants.MyApplication.POST_INTERNAL_LOGOUT_REDIRECT_URI); 
+            response.sendRedirect(getServerBaseLink(request)+ProSanteConnectConstants.MyApplication.POST_INTERNAL_LOGOUT_REDIRECT_URI);
         }
     }
 

@@ -2,16 +2,6 @@ package fr.gouv.dnum.bio2;
 
 public class ProSanteConnectConstants {
 
-    // côté ProConnect
-    public static final class SessionAttribute {
-
-        public static final String SESSION_NONCE = "proConnectNonce";
-        public static final String SESSION_STATE = "proConnectState";
-        public static final String SESSION_ACCESS_TOKEN = "proConnectAccessToken";
-        public static final String SESSION_ID_TOKEN = "proConnectIdToken";
-
-        public static final String SESSION_USER_INFO = "userInfo";
-    }
 
     // côté ProConnect
     public static final class ProSanteConnect {
@@ -38,8 +28,8 @@ public class ProSanteConnectConstants {
     public static final class MyApplication {
         // doivent correspondre à ce qui a été configuré dans le BO ProConnect
         //public static final String REDIRECT_URI = "http://localhost:8080/proconnect/valid_code";
-        public static final String REDIRECT_URI = "http://localhost:8080/redirect";
-        public static final String POST_INTERNAL_LOGOUT_REDIRECT_URI = "http://localhost:8080/logout";
+        public static final String REDIRECT_URI = "/redirect";
+        public static final String POST_INTERNAL_LOGOUT_REDIRECT_URI = "/logout";
     }
 
 }
