@@ -80,31 +80,23 @@ jobs:
       #     cd deploy
       #     npm run build
 
-      # - name: Checkout GitOps repository
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: ${{ env.GITOPS_REPO }}
-      #     path: gitops-repo
-      #     ssh-key: ${{ secrets.GITOPS_REPO_KEY }}
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          path: gitops-repo
+          ssh-key: ${{ secrets.GITOPS_REPO_KEY }}
 
-      # - name: Manifests deployment to GitOps repository
-      #   run: |
-      #     if [ "${GITHUB_REF_NAME}" = "develop" ]; then
-      #       rm -rf gitops-repo/deployment-targets/developpement/home/*
-      #       cp -r deploy/dist/developpement/* gitops-repo/deployment-targets/developpement/home/
-      #     else
-      #       rm -rf gitops-repo/deployment-targets/test/home/*
-      #       cp -r deploy/dist/test/* gitops-repo/deployment-targets/test/home/
-      #     fi
+      - name: Manifests deployment to GitOps repository
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          cd gitops-repo/deployment-targets/dev
+          sed -i "s|ghcr.io/dnum-socialgouv/poc-bio2:.*|ghcr.io/dnum-socialgouv/poc-bio2:sha-${SHORT_SHA}|g" Deployment.bio2.yaml
+          
+          # mail standard bot github Actions
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      #     # mail standard bot github Actions
-      #     git config --global user.name "github-actions[bot]"
-      #     git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      #     cd gitops-repo
-      #     git add .
-      #     if [ "${GITHUB_REF_NAME}" = "develop" ]; then
-      #       git commit -m 'Déploiement manifestes home environnement "developpement"'
-      #     else
-      #       git commit -m 'Déploiement manifestes home environnement "test"'
-      #     fi
-      #     git push
+          git add .
+          git commit -m 'Déploiement manifestes home environnement "test"'
+          git push
