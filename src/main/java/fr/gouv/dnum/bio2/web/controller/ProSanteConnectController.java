@@ -269,25 +269,40 @@ public class ProSanteConnectController {
             return;
         }
 
-        Exercice exercice = userInfo.getSubjectRefPro().getExercices().getFirst();
-        
-        addExtraLabel(extra, "Code profession", exercice.getCodeProfession(), 
-                code -> ProfessionSante.getProfessionSante(code).getLibelle());
-        
-        addExtraLabel(extra, "Code savoir faire", exercice.getCodeSavoirFaire(),
-                code -> SavoirFaire.getSavoirFaire(code).getLibelle());
+        List<Exercice> exercices = userInfo.getSubjectRefPro().getExercices();
 
-        if (!exercice.getActivities().isEmpty()) {
-            var activity = exercice.getActivities().getFirst();
-            
-            addExtraLabel(extra, "Code secteur activité", activity.getCodeSecteurDactivite(),
-                    code -> SecteurActivite.getSecteurActivite(code).getLibelle());
-            
-            addExtraLabel(extra, "Code section pharmacien", activity.getCodeSectionPharmacien(),
-                    code -> CategoriePharmacien.getCategoriePharmacien(code).getLibelle());
-            
-            addExtraLabel(extra, "Code genre activite", activity.getCodeGenreActivite(),
-                    code -> GenreActivite.getGenreActivite(code).getLibelle());
+        int countExercices = 1;
+        for (Exercice exercice : exercices) {
+
+            String prefixExercice = exercices.size()>1 ? "Exercice " + countExercices + " - " : "";
+
+            addExtraLabel(extra, prefixExercice+"Code profession", exercice.getCodeProfession(),
+                    code -> ProfessionSante.getProfessionSante(code).getLibelle());
+
+            addExtraLabel(extra, prefixExercice+"Code savoir faire", exercice.getCodeSavoirFaire(),
+                    code -> SavoirFaire.getSavoirFaire(code).getLibelle());
+
+            if (!exercice.getActivities().isEmpty()) {
+
+                int countActivities = 1;
+
+                for (var activity : exercice.getActivities()) {
+
+                    String prefixActivity = exercice.getActivities().size()>1 ? "Activité "+countActivities+" - " : "";
+
+                    addExtraLabel(extra, prefixExercice+prefixActivity+"Code secteur activité", activity.getCodeSecteurDactivite(),
+                            code -> SecteurActivite.getSecteurActivite(code).getLibelle());
+
+                    addExtraLabel(extra, prefixExercice+prefixActivity+"Code section pharmacien", activity.getCodeSectionPharmacien(),
+                            code -> CategoriePharmacien.getCategoriePharmacien(code).getLibelle());
+
+                    addExtraLabel(extra, prefixExercice+prefixActivity+"Code genre activite", activity.getCodeGenreActivite(),
+                            code -> GenreActivite.getGenreActivite(code).getLibelle());
+
+                    countActivities++;
+                }
+            }
+            countExercices++;
         }
     }
 
